@@ -4,7 +4,10 @@ import "./index.css";
 import save from "./save.svg";
 
 
-const Card = ({ name, price, discount, wight, description, picture, tags }) => {
+const Card = (props) => {
+
+	const { name, price, discount, wight, description, pictures, tags } = props;
+
 	const discount_price = Math.round(price - price * discount / 100);
 	return (
 		<div className="card">
@@ -16,14 +19,14 @@ const Card = ({ name, price, discount, wight, description, picture, tags }) => {
 				<button className="card__favorite">
 					<img
 						src={save}
-						alt="Добавить в избаранное"
+						alt="Добавить в избранное"
 						className="card__favorite-icon"
 					/>
 				</button>
 			</div>
 
 			<a href="/product" className="card__link">
-				<img src={picture} alt={description} className="card__image" />
+				<img src={pictures} alt={description} className="card__image" />
 				<div className="card__desc">
 					<span className={discount !== 0 ? "card__old-price" : "card__price"}>
 						{price}&nbsp;₽
