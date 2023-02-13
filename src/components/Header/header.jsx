@@ -1,17 +1,8 @@
 import s from './index.module.css';
 import cn from 'classnames';
-import { useState } from 'react';
 
 
-function Header({user, onUpdateUser, children}) {
-
-  const [name, setName] = useState(user.name);
-  const [about, setAbout] = useState(user.about);
-
-  const handleClickButtonEdit = (e) => {
-		e.preventDefault();
-		onUpdateUser({name: name, about: about})
-	}
+function Header({children, user}) {
 
   return (
     <header className={cn(s.header,'cover')}>
@@ -19,14 +10,10 @@ function Header({user, onUpdateUser, children}) {
         <div className={s.wrapper}>
           {children}
         </div>
+        <div>Имя пользователя: {user?.name}</div>
+         <div> Email: {user?.email}</div>
+         <div> О себе: {user?.about}</div>
       </div>
-      <div className={s.profile}>
-		{user.email && <span>{user.email}</span>}
-		{user.name && <span>{user.name}: {user.about}</span>}
-		</div>
-      <button onClick={handleClickButtonEdit} className="btn btn_type_secondary">
-        Изменить
-      </button>
     </header>
   )
 }

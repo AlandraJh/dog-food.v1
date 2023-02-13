@@ -8,48 +8,39 @@ import Sort from '../Sort/sort';
 import './index.css';
 import SeachInfo from '../SeachInfo';
 import Button from '../Button/button';
-import api from '../../Api';
-import useDebounce from '../../useDebounce';
+import api from '../../utils/api';
+import useDebounce from '../../hooks/useDebounce';
+import { isLiked } from '../../utils/product';
 
 function App() {
-  const [currentUser, setCurrentUser] = useState({});
   const [cards, setCards] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const debounceValue = useDebounce(searchQuery, 500);
-
+  const [currentUser, setCurrentUser] = useState(null)
+  const debounceSearchQuery = useDebounce(searchQuery, 500)
+  
+  // debounce задержка поиска при вводе
+  
   const handleRequest = () => {
-		api.search(searchQuery)
-			.then(data => {
-				setCards(prevState => data)
-			})
-			.catch( err => console.log(err))
-	}
-  
-  
-  
-  // const handleRequest = async () => {
-  //   if (!debounceValue) {
-  //     const allCards = await api.getProductList();
-  //     setCards(allCards.products);
-  //   } else {
-  //     const filterCards = await api.search(debounceValue);
-  //     setCards(filterCards);
-  //   }
-  // }
+    api.search(debounceSearchQuery)
+      .then((searchResult)=> {
+        setCards(searchResult)
+      })
+      .catch( err => console.log(err))
+  }
 
   useEffect(() => {
+    Promise.all([api.getProductList(), api.getUserInfo()])
+      .then(([productsData, userData])=> {
+        setCurrentUser(userData)
+        setCards(productsData.products)
+      })
+      .catch( err => console.log(err))
+  },[])
+
+  useEffect(()=>{
     handleRequest()
-    console.log("INPUT", debounceValue);
-  },[debounceValue])
-
-
-  useEffect(() => {
-      Promise.all([api.getProductList(), api.getUserInfo()])
-         .then(([productData, userData]) => {
-           setCurrentUser(userData);
-           setCards(productData.products);
-         });
-     }, []);
+    console.log("INPUT", debounceSearchQuery);
+  },[debounceSearchQuery])
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -60,11 +51,26 @@ function App() {
     setSearchQuery(inputValue);
   }
 
-  function handleUpdateUser(userUpdate) {
-		api.setUserInfo(userUpdate).then((newUserData) => {
-			setCurrentUser(newUserData);
-		  });
-	}
+  function handleUpdateUser(userUpdateData) {
+    api.setUserInfo(userUpdateData)
+      .then((newUserData) => {
+        setCurrentUser(newUserData)
+      })
+  }
+
+  function handleProductLike(product) {
+    const liked = isLiked(product.likes, currentUser._id)
+    api.changeLikeProduct(product._id, liked)
+      .then((newCard) => {
+        const newProducts = cards.map(cardState => {
+          console.log('Карточка из стейта', cardState);
+          console.log('Карточка c сервера', newCard);
+          return cardState._id === newCard._id ? newCard : cardState
+        })
+
+        setCards(newProducts);
+      })
+  }
 
   return (
     <>
@@ -75,10 +81,10 @@ function App() {
         </>
       </Header>
       <main className='content container'>
-      <SeachInfo searchCount={cards.length} searchText={debounceValue}/>
-       <Sort/>
+        <SeachInfo searchCount={cards.length} searchText={searchQuery}/>
+        <Sort/>
         <div className='content__cards'>
-         <CardList goods={cards}/>
+         <CardList goods={cards} onProductLike={handleProductLike} currentUser={currentUser}/>
         </div>
       </main>
       <Footer/>
